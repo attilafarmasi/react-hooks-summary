@@ -7,7 +7,7 @@ import Search from "./Search";
 const Ingredients = () => {
   const [userIngredients, setUserIngredients] = useState([]);
 
-  const filteredIngredientsHandler = useCallback(filteredIngredients => {
+  const filteredIngredientsHandler = useCallback((filteredIngredients) => {
     setUserIngredients(filteredIngredients);
   }, []);
 
@@ -32,9 +32,16 @@ const Ingredients = () => {
   };
 
   const removeIngredientHandler = (id) => {
-    setUserIngredients((prevIngredients) =>
-      prevIngredients.filter((ingredient) => ingredient.id !== id)
-    );
+    fetch(
+      `https://react-hooks-update-12232-default-rtdb.firebaseio.com/ingredients/${id}.json`,
+      {
+        method: "DELETE",
+      }
+    ).then((response) => {
+      setUserIngredients((prevIngredients) =>
+        prevIngredients.filter((ingredient) => ingredient.id !== id)
+      );
+    });
   };
 
   return (
@@ -42,7 +49,7 @@ const Ingredients = () => {
       <IngredientForm onAddIngredient={addIgredientHandler} />
 
       <section>
-        <Search onLoadIngredients={filteredIngredientsHandler}/>
+        <Search onLoadIngredients={filteredIngredientsHandler} />
         <IngredientList
           ingredients={userIngredients}
           onRemoveItem={removeIngredientHandler}
