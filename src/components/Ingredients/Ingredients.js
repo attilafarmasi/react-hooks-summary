@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback, useMemo } from "react";
+import React, { useReducer, useCallback, useMemo, useEffect } from "react";
 
 import IngredientForm from "./IngredientForm";
 import IngredientList from "./IngredientList";
@@ -21,14 +21,32 @@ const ingredientReducer = (currentIngredients, action) => {
 
 const Ingredients = () => {
   const [userIngredients, dispatch] = useReducer(ingredientReducer, []);
-  const { isLoading, data, error, sendRequest } = useHttp();
+  const { isLoading, data, error, sendRequest, reqExtra, reqIdentifier } = useHttp();
+
+  useEffect(() => {
+    if (!isLoading && !error && reqIdentifier === "REMOVE_INGREDIENT") {
+      dispatch({ type: "DELETE", id: reqExtra });
+    } else if(!isLoading && !error && reqIdentifier === "ADD_INGREDIENT"){
+      dispatch({
+        type: "ADD",
+        ingredient: { id: data.name, ...reqExtra },
+      });
+    }
+  }, [data, reqExtra, reqIdentifier, isLoading, error]);
 
   const filteredIngredientsHandler = useCallback((filteredIngredients) => {
     dispatch({ type: "SET", ingredients: filteredIngredients });
   }, []);
 
   const addIgredientHandler = useCallback((ingredient) => {
-    dispatchHttp({ type: "SEND" });
+    sendRequest(
+      "https://react-hooks-update-12232-default-rtdb.firebaseio.com/ingredients.json",
+      "POST",
+      JSON.stringify(ingredient),
+      ingredient,
+      "ADD_INGREDIENT"
+    );
+    /*  dispatchHttp({ type: "SEND" });
     fetch(
       "https://react-hooks-update-12232-default-rtdb.firebaseio.com/ingredients.json",
       {
@@ -46,18 +64,24 @@ const Ingredients = () => {
           type: "ADD",
           ingredient: { id: responseData.name, ...ingredient },
         });
-      });
+      }); */
   }, []);
 
-  const removeIngredientHandler = useCallback((ingredientId) => {
-    sendRequest(
-      `https://react-hooks-update-12232-default-rtdb.firebaseio.com/ingredients/${ingredientId}.json`,
-      "DELETE"
-    );
-  }, [sendRequest]);
+  const removeIngredientHandler = useCallback(
+    (ingredientId) => {
+      sendRequest(
+        `https://react-hooks-update-12232-default-rtdb.firebaseio.com/ingredients/${ingredientId}.json`,
+        "DELETE",
+        null,
+        ingredientId,
+        "REMOVE_INGREDIENT"
+      );
+    },
+    [sendRequest]
+  );
 
   const clearError = useCallback(() => {
-    dispatchHttp({ type: "CLEAR" });
+    //dispatchHttp({ type: "CLEAR" });
   }, []);
 
   const ingredientList = useMemo(() => {
